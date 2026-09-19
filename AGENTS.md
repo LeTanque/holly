@@ -6,7 +6,7 @@ Holly is a local-first ACT therapy chatbot: Vite + React + TypeScript + Tailwind
 
 ### Commands
 
-- `npm run dev` — Vite (5173) + API (3001)
+- `npm run dev` — Vite (5199) + API (3011), override with `VITE_PORT` / `PORT` in `.env`
 - `npm run build` — production client build
 - `npm run lint` — ESLint
 - `npm run server` — API only

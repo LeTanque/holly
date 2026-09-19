@@ -19,7 +19,7 @@ app.route('/api/sessions', sessionsRoute)
 app.route('/api/chat', chatRoute)
 app.route('/api/memory', memoryRoute)
 
-const port = Number(process.env.PORT) || 3001
+const port = Number(process.env.PORT) || 3011
 
 serve({ fetch: app.fetch, port }, () => {
   console.log(`Holly API listening on http://127.0.0.1:${port}`)

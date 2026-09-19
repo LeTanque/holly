@@ -68,13 +68,10 @@ export async function consolidateSession(sessionId: string): Promise<void> {
   const systemPrompt = fs.readFileSync(consolidatePromptPath, 'utf8')
   const userContent = `Previous working memory:\n${priorMemory || '(empty)'}\n\n---\n\nSession transcript:\n${transcriptText}`
 
-  const raw = await chatCompletion(
-    [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userContent },
-    ],
-    { temperature: 0.3 },
-  )
+  const raw = await chatCompletion([
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userContent },
+  ])
 
   const { sessionSummary, workingMemory: newMemory } =
     parseConsolidationOutput(raw)

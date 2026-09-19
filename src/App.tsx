@@ -20,6 +20,7 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [streaming, setStreaming] = useState<string | null>(null)
+  const [hollyThinking, setHollyThinking] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [memoryOpen, setMemoryOpen] = useState(false)
@@ -103,11 +104,15 @@ export default function App() {
       createdAt: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, optimistic])
-    setStreaming('')
+    setStreaming(null)
+    setHollyThinking(true)
 
     try {
       await streamChat(activeId, text, {
-        onDelta: (chunk) => setStreaming((s) => (s ?? '') + chunk),
+        onDelta: (chunk) => {
+          setHollyThinking(false)
+          setStreaming((s) => (s ?? '') + chunk)
+        },
         onDone: () => {},
         onError: (msg) => setError(msg),
       })
@@ -118,6 +123,7 @@ export default function App() {
       setError(e instanceof Error ? e.message : 'Send failed')
     } finally {
       setStreaming(null)
+      setHollyThinking(false)
       setBusy(false)
     }
   }
@@ -147,8 +153,16 @@ export default function App() {
             {error}
           </div>
         )}
-        <ChatThread messages={messages} streamingContent={streaming} />
-        <Composer disabled={busy || !activeId} onSend={(t) => void sendMessage(t)} />
+        <ChatThread
+          messages={messages}
+          hollyThinking={hollyThinking}
+          streamingContent={streaming}
+        />
+        <Composer
+          disabled={busy || !activeId}
+          status={hollyThinking ? 'Holly is reflecting…' : undefined}
+          onSend={(t) => void sendMessage(t)}
+        />
       </main>
       {memoryOpen && (
         <MemoryPanel content={memoryContent} onClose={() => setMemoryOpen(false)} />

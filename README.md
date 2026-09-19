@@ -13,16 +13,17 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The API runs on port 3001.
+Open [http://localhost:5199](http://localhost:5199). The API runs on port 3011.
 
 ### Environment
 
 ```bash
 # .env.example
 LLM_API_KEY=
-LLM_MODEL=gpt-4o-mini   # or claude-3-5-sonnet, etc.
+LLM_MODEL=gpt-5-mini   # omit LLM_TEMPERATURE for gpt-5 / o-series (default only)
 LLM_BASE_URL=           # optional, for OpenRouter/custom
-PORT=3001
+PORT=3011
+VITE_PORT=5199
 ```
 
 ## Scripts
@@ -166,7 +167,7 @@ flowchart LR
 | [server/](server/) | Hono API, memory, context assembly |
 | [data/](data/) | Local SQLite (gitignored) |
 
-**Dev:** Vite proxies `/api` → `http://127.0.0.1:3001`.
+**Dev:** Vite proxies `/api` → `http://127.0.0.1:3011` (ports configurable via `.env`).
 
 #### Key implementation files
 

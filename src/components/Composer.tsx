@@ -2,10 +2,11 @@ import { useRef } from 'react'
 
 type Props = {
   disabled?: boolean
+  status?: string
   onSend: (text: string) => void
 }
 
-export function Composer({ disabled, onSend }: Props) {
+export function Composer({ disabled, status, onSend }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null)
 
   const submit = () => {
@@ -45,12 +46,16 @@ export function Composer({ disabled, onSend }: Props) {
           onClick={submit}
           className="rounded-xl bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Send
+          {status ? '…' : 'Send'}
         </button>
       </div>
       <p className="mx-auto mt-2 max-w-3xl text-center text-xs text-zinc-500">
-        Holly offers ACT-style support, not licensed therapy or crisis care. If you
-        are in danger, contact local emergency services or call 988 (US).
+        {status ?? (
+          <>
+            Holly offers ACT-style support, not licensed therapy or crisis care. If
+            you are in danger, contact local emergency services or call 988 (US).
+          </>
+        )}
       </p>
     </div>
   )

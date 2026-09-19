@@ -16,14 +16,30 @@ function llmConfig() {
     /\/$/,
     '',
   )
-  const model = process.env.LLM_MODEL || 'gpt-4o-mini'
+  const model = process.env.LLM_MODEL || 'gpt-5-mini'
   return { apiKey, baseUrl, model }
 }
 
-export async function chatCompletion(
+/** Only sent when LLM_TEMPERATURE is set — many models (e.g. gpt-5, o-series) reject non-default values. */
+function temperatureFromEnv(): number | undefined {
+  const raw = process.env.LLM_TEMPERATURE
+  if (raw === undefined || raw.trim() === '') return undefined
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : undefined
+}
+
+function completionBody(
+  model: string,
   messages: ChatMessage[],
-  options?: { temperature?: number },
-): Promise<string> {
+  extra?: Record<string, unknown>,
+): Record<string, unknown> {
+  const body: Record<string, unknown> = { model, messages, ...extra }
+  const temperature = temperatureFromEnv()
+  if (temperature !== undefined) body.temperature = temperature
+  return body
+}
+
+export async function chatCompletion(messages: ChatMessage[]): Promise<string> {
   const { apiKey, baseUrl, model } = llmConfig()
 
   const res = await fetch(`${baseUrl}/chat/completions`, {
@@ -32,11 +48,7 @@ export async function chatCompletion(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options?.temperature ?? 0.7,
-    }),
+    body: JSON.stringify(completionBody(model, messages)),
   })
 
   if (!res.ok) {
@@ -54,7 +66,6 @@ export async function chatCompletion(
 
 export async function* streamChatCompletion(
   messages: ChatMessage[],
-  options?: { temperature?: number },
 ): AsyncGenerator<string> {
   const { apiKey, baseUrl, model } = llmConfig()
 
@@ -64,12 +75,7 @@ export async function* streamChatCompletion(
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model,
-      messages,
-      temperature: options?.temperature ?? 0.7,
-      stream: true,
-    }),
+    body: JSON.stringify(completionBody(model, messages, { stream: true })),
   })
 
   if (!res.ok) {

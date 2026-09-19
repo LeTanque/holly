@@ -2,18 +2,24 @@ import { useEffect, useRef } from 'react'
 
 import type { Message } from '../lib/api'
 import { MessageBubble } from './MessageBubble'
+import { ThinkingIndicator } from './ThinkingIndicator'
 
 type Props = {
   messages: Message[]
+  hollyThinking?: boolean
   streamingContent?: string | null
 }
 
-export function ChatThread({ messages, streamingContent }: Props) {
+export function ChatThread({
+  messages,
+  hollyThinking,
+  streamingContent,
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streamingContent])
+  }, [messages, streamingContent, hollyThinking])
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6">
@@ -23,6 +29,7 @@ export function ChatThread({ messages, streamingContent }: Props) {
             <MessageBubble key={m.id} role={m.role} content={m.content} />
           ) : null,
         )}
+        {hollyThinking && <ThinkingIndicator />}
         {streamingContent != null && streamingContent !== '' && (
           <MessageBubble
             role="assistant"
