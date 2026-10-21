@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+APP_MACOS="$(cd "$(dirname "$0")" && pwd)"
+REPO_FROM_APP="$(cd "${APP_MACOS}/../../../.." && pwd)"
+# shellcheck disable=SC1091
+source "${REPO_FROM_APP}/scripts/resolve-root.sh"
+ROOT="$(resolve_holly_root "${REPO_FROM_APP}/scripts/launch-holly.sh")"
+exec "${ROOT}/scripts/launch-holly.sh"

@@ -31,6 +31,8 @@ export default function App() {
   const [speakReplies, setSpeakReplies] = useState(() => getSpeakRepliesEnabled())
   const { speak, stop, voiceActive, phase: voicePhase } = useVoiceOutput()
   const lastReplyRef = useRef('')
+  const [memorySyncing, setMemorySyncing] = useState(false)
+  const consolidateQueue = useRef(Promise.resolve())
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -45,6 +47,25 @@ export default function App() {
     setSessions(list)
     return list
   }, [])
+
+  const enqueueConsolidate = useCallback(
+    (sessionId: string) => {
+      consolidateQueue.current = consolidateQueue.current
+        .then(async () => {
+          setMemorySyncing(true)
+          await consolidateSession(sessionId)
+        })
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : 'Consolidation failed'
+          setError(`Memory update skipped: ${msg}`)
+        })
+        .finally(() => {
+          setMemorySyncing(false)
+          void loadSessions()
+        })
+    },
+    [loadSessions],
+  )
 
   const loadMessages = useCallback(async (sessionId: string) => {
     const msgs = await fetchMessages(sessionId)
@@ -82,23 +103,16 @@ export default function App() {
 
   const startNewSession = async () => {
     if (!activeId || busy) return
+    const previousId = activeId
     setBusy(true)
     setError(null)
     try {
-      try {
-        await consolidateSession(activeId)
-      } catch (consolidateErr) {
-        const msg =
-          consolidateErr instanceof Error
-            ? consolidateErr.message
-            : 'Consolidation failed'
-        setError(`Memory update skipped: ${msg}`)
-      }
       const created = await createSession()
-      const list = await loadSessions()
-      setSessions(list.length ? list : [created])
       setActiveId(created.id)
       await loadMessages(created.id)
+      const list = await loadSessions()
+      setSessions(list.length ? list : [created])
+      enqueueConsolidate(previousId)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not start session')
     } finally {
@@ -169,6 +183,9 @@ export default function App() {
         onSelect={(id) => void selectSession(id)}
         onNewSession={() => void startNewSession()}
         onShowMemory={() => void openMemory()}
+        newSessionDisabled={busy || !activeId}
+        newSessionLabel={busy ? 'Starting…' : 'New session'}
+        memorySyncing={memorySyncing}
       />
       <main className="flex min-w-0 flex-1 flex-col">
         {error && (
@@ -203,7 +220,13 @@ export default function App() {
         )}
         <Composer
           disabled={busy || !activeId}
-          status={hollyThinking ? 'Holly is reflecting…' : undefined}
+          status={
+            memorySyncing
+              ? 'Updating memory from previous session…'
+              : hollyThinking
+                ? 'Holly is reflecting…'
+                : undefined
+          }
           onSend={(t) => void sendMessage(t)}
           onRecordingStart={() => stop()}
           speakReplies={speakReplies}

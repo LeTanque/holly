@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "tsx server/index.ts"
+    "server": "tsx server/index.ts",
+    "launch": "bash scripts/launch-holly.sh"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.1",
