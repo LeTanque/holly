@@ -12,6 +12,27 @@ function audioConfig() {
   return { apiKey, baseUrl, sttModel, ttsModel, ttsVoice }
 }
 
+function abortableDelay(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve()
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(), ms)
+    if (!signal) return
+    if (signal.aborted) {
+      clearTimeout(timer)
+      reject(new DOMException('Aborted', 'AbortError'))
+      return
+    }
+    signal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer)
+        reject(new DOMException('Aborted', 'AbortError'))
+      },
+      { once: true },
+    )
+  })
+}
+
 export const audioRoute = new Hono()
 
 audioRoute.get('/capabilities', (c) => {
@@ -61,6 +82,13 @@ audioRoute.post('/transcribe', async (c) => {
 })
 
 audioRoute.post('/speech', async (c) => {
+  const testDelayMs = Number(process.env.LLM_TTS_TEST_DELAY_MS || 0)
+  try {
+    await abortableDelay(testDelayMs, c.req.raw.signal)
+  } catch {
+    return c.body(null, 499)
+  }
+
   const { apiKey, baseUrl, ttsModel, ttsVoice } = audioConfig()
   if (!apiKey) {
     return c.json({ error: 'Server audio is not configured' }, 503)

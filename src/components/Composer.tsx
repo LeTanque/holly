@@ -15,7 +15,8 @@ type Props = {
   onRecordingStart?: () => void
   speakReplies?: boolean
   onSpeakRepliesChange?: (enabled: boolean) => void
-  speaking?: boolean
+  voiceActive?: boolean
+  voicePhase?: 'idle' | 'loading' | 'playing'
   onStopSpeaking?: () => void
 }
 
@@ -26,7 +27,8 @@ export function Composer({
   onRecordingStart,
   speakReplies: speakRepliesProp,
   onSpeakRepliesChange,
-  speaking,
+  voiceActive,
+  voicePhase,
   onStopSpeaking,
 }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -128,15 +130,6 @@ export function Composer({
           />
           <span>Speak replies</span>
         </label>
-        {speaking && (
-          <button
-            type="button"
-            onClick={onStopSpeaking}
-            className="rounded-lg border border-zinc-700 px-2 py-1 text-zinc-300 hover:bg-zinc-900"
-          >
-            Stop speaking
-          </button>
-        )}
         <label className="flex cursor-pointer items-center gap-2 select-none">
           <input
             type="checkbox"
@@ -201,12 +194,29 @@ export function Composer({
             t.style.height = `${t.scrollHeight}px`
           }}
           onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              onStopSpeaking?.()
+              return
+            }
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault()
               submit()
             }
           }}
         />
+        {voiceActive && (
+          <button
+            type="button"
+            onClick={onStopSpeaking}
+            className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-red-950/30 transition hover:bg-red-500 active:bg-red-700"
+            aria-label={
+              voicePhase === 'loading' ? 'Stop preparing voice' : 'Stop Holly speaking'
+            }
+          >
+            Stop
+          </button>
+        )}
         <button
           type="button"
           disabled={controlsDisabled}

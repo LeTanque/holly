@@ -49,11 +49,15 @@ export async function transcribeBlob(blob: Blob, mimeType: string): Promise<stri
   return data.text
 }
 
-export async function fetchSpeechAudio(text: string): Promise<ArrayBuffer> {
+export async function fetchSpeechAudio(
+  text: string,
+  signal?: AbortSignal,
+): Promise<ArrayBuffer> {
   const res = await fetch('/api/audio/speech', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
+    signal,
   })
 
   if (!res.ok) {
