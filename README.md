@@ -22,9 +22,21 @@ Open [http://localhost:5199](http://localhost:5199). The API runs on port 3011.
 LLM_API_KEY=
 LLM_MODEL=gpt-5-mini   # omit LLM_TEMPERATURE for gpt-5 / o-series (default only)
 LLM_BASE_URL=           # optional, for OpenRouter/custom
+# LLM_STT_MODEL=whisper-1
+# LLM_TTS_MODEL=tts-1
+# LLM_TTS_VOICE=nova    # warm female voice for Holly (OpenAI voices: nova, shimmer, …)
 PORT=3011
 VITE_PORT=5199
+# VITE_DEV_HTTPS=true   # self-signed HTTPS for LAN + microphone on phones
 ```
+
+### Voice conversation
+
+Holly supports optional **voice input** (mic in the composer) and **spoken replies** (toggle in the composer footer). Speech is transcribed and synthesized through **server-side proxies** (`POST /api/audio/transcribe`, `POST /api/audio/speech`) using the same `LLM_API_KEY` and `LLM_BASE_URL` as chat — the key never reaches the browser. Configure optional `LLM_STT_MODEL`, `LLM_TTS_MODEL`, and `LLM_TTS_VOICE` in `.env`.
+
+If the server audio routes are unavailable or fail, the UI falls back to the **Web Speech API** (browser speech recognition / synthesis). Raw audio is not stored; only transcribed text enters the normal message flow.
+
+**LAN / phones:** Vite binds to `0.0.0.0` so you can open Holly from other devices on your network. Microphones require a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) (HTTPS or localhost). For phone testing over Wi‑Fi, set `VITE_DEV_HTTPS=true`, restart `npm run dev`, and accept the self-signed certificate in the browser. HTTP on `localhost` still works on your Mac without HTTPS.
 
 ## Scripts
 
@@ -140,7 +152,7 @@ flowchart LR
   subgraph frontend [Vite React client]
     sidebar[Session sidebar]
     thread[Message thread markdown streaming]
-    composer[Composer]
+    composer[Composer + voice mic / speak toggle]
   end
 
   subgraph backend [Node server]
@@ -149,6 +161,7 @@ flowchart LR
     messagesRoute[GET /api/sessions/:id/messages]
     consolidateRoute[POST /api/sessions/:id/consolidate]
     memoryRoute[GET /api/memory/working-memory]
+    audioRoute[POST /api/audio/transcribe + speech]
   end
 
   frontend --> backend

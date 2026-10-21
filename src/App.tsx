@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { getSpeakRepliesEnabled } from './lib/voice/settings'
+import { useVoiceOutput } from './lib/voice/useVoiceOutput'
 
 import {
   consolidateSession,
@@ -25,6 +28,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [memoryOpen, setMemoryOpen] = useState(false)
   const [memoryContent, setMemoryContent] = useState('')
+  const [speakReplies, setSpeakReplies] = useState(() => getSpeakRepliesEnabled())
+  const voiceOutput = useVoiceOutput()
+  const lastReplyRef = useRef('')
 
   const loadSessions = useCallback(async () => {
     const list = await fetchSessions()
@@ -94,8 +100,10 @@ export default function App() {
 
   const sendMessage = async (text: string) => {
     if (!activeId || busy) return
+    voiceOutput.stop()
     setBusy(true)
     setError(null)
+    lastReplyRef.current = ''
     const optimistic: Message = {
       id: `temp-${Date.now()}`,
       sessionId: activeId,
@@ -111,11 +119,18 @@ export default function App() {
       await streamChat(activeId, text, {
         onDelta: (chunk) => {
           setHollyThinking(false)
-          setStreaming((s) => (s ?? '') + chunk)
+          setStreaming((s) => {
+            const next = (s ?? '') + chunk
+            lastReplyRef.current = next
+            return next
+          })
         },
         onDone: () => {},
         onError: (msg) => setError(msg),
       })
+      if (speakReplies && lastReplyRef.current.trim()) {
+        void voiceOutput.speak(lastReplyRef.current)
+      }
       await loadMessages(activeId)
       const list = await loadSessions()
       setSessions(list)
@@ -162,6 +177,11 @@ export default function App() {
           disabled={busy || !activeId}
           status={hollyThinking ? 'Holly is reflecting…' : undefined}
           onSend={(t) => void sendMessage(t)}
+          onRecordingStart={() => voiceOutput.stop()}
+          speakReplies={speakReplies}
+          onSpeakRepliesChange={setSpeakReplies}
+          speaking={voiceOutput.speaking}
+          onStopSpeaking={() => voiceOutput.stop()}
         />
       </main>
       {memoryOpen && (
