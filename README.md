@@ -34,6 +34,15 @@ VITE_PORT=5199
 | `npm run build` | Production client build |
 | `npm run lint` | ESLint |
 | `npm run server` | API only |
+| `npm run launch` | Start dev (if needed) and open the UI in your browser |
+
+### macOS app (local shortcut)
+
+Double-click **`macos/Holly.app`** (or run `open macos/Holly.app`). It runs from this repo directory — **`data/holly.db` is unchanged** (still `data/holly.db` under the project root). If the dev servers are already up, it only opens the browser.
+
+Logs append to `logs/holly-dev.log`. First launch on an unsigned app: **right-click → Open** if macOS blocks it.
+
+Optional: drag `Holly.app` to the Dock. The repo should live at **`~/git/holly`** (launcher prefers that path). You can keep the `.app` bundle inside the repo or copy it elsewhere once the project is in `~/git/holly`.
 
 ---
 

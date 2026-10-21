@@ -6,6 +6,9 @@ type Props = {
   onSelect: (id: string) => void
   onNewSession: () => void
   onShowMemory: () => void
+  newSessionDisabled?: boolean
+  newSessionLabel?: string
+  memorySyncing?: boolean
 }
 
 function formatWhen(iso: string) {
@@ -27,6 +30,9 @@ export function SessionSidebar({
   onSelect,
   onNewSession,
   onShowMemory,
+  newSessionDisabled = false,
+  newSessionLabel = 'New session',
+  memorySyncing = false,
 }: Props) {
   return (
     <aside className="flex w-72 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950">
@@ -38,10 +44,14 @@ export function SessionSidebar({
         <button
           type="button"
           onClick={onNewSession}
-          className="mt-4 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800"
+          disabled={newSessionDisabled}
+          className="mt-4 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          New session
+          {newSessionLabel}
         </button>
+        {memorySyncing && (
+          <p className="mt-2 text-xs text-zinc-500">Saving memory from prior session…</p>
+        )}
         <button
           type="button"
           onClick={onShowMemory}

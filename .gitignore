@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 .env
+.holly-dev.pid
 data/
 
 # Editor directories and files

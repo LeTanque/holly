@@ -19,6 +19,7 @@ Holly is a local-first ACT therapy chatbot: Vite + React + TypeScript + Tailwind
 - `prompts/holly-system.md` — runtime ACT system prompt (keep in sync with section below)
 - `prompts/consolidate-system.md` — memory extractor (not client-facing)
 - `data/holly.db` — local SQLite (gitignored)
+- `macos/Holly.app` — double-click launcher (runs `npm run dev`, same DB path)
 
 ### Memory architecture
 

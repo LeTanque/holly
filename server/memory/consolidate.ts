@@ -58,6 +58,14 @@ export async function consolidateSession(sessionId: string): Promise<void> {
     return
   }
 
+  const lastMessage = dialog[dialog.length - 1]!
+  if (
+    session.consolidatedAt &&
+    lastMessage.createdAt <= session.consolidatedAt
+  ) {
+    return
+  }
+
   const [wmRow] = await db.select().from(workingMemory).limit(1)
   const priorMemory = wmRow?.content ?? ''
 
@@ -109,5 +117,9 @@ export async function consolidateSession(sessionId: string): Promise<void> {
     })
     .where(eq(sessions.id, sessionId))
 
-  await indexSessionChunks(sessionId)
+  try {
+    await indexSessionChunks(sessionId)
+  } catch (err) {
+    console.error('[holly] chunk indexing failed:', err)
+  }
 }
