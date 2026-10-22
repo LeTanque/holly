@@ -34,7 +34,8 @@ export function Composer({
   const ref = useRef<HTMLTextAreaElement>(null)
   const [speakReplies, setSpeakRepliesLocal] = useState(() => getSpeakRepliesEnabled())
   const [autoSendVoice, setAutoSendVoice] = useState(() => getAutoSendAfterVoice())
-  const speakRepliesEnabled = speakRepliesProp ?? speakReplies
+  const speakRepliesEnabled =
+    speakRepliesProp !== undefined ? speakRepliesProp : speakReplies
 
   const setText = (text: string) => {
     const el = ref.current

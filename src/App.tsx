@@ -141,16 +141,13 @@ export default function App() {
       await streamChat(activeId, text, {
         onDelta: (chunk) => {
           setHollyThinking(false)
-          setStreaming((s) => {
-            const next = (s ?? '') + chunk
-            lastReplyRef.current = next
-            return next
-          })
+          lastReplyRef.current += chunk
+          setStreaming((s) => (s ?? '') + chunk)
         },
         onDone: () => {},
         onError: (msg) => setError(msg),
       })
-      if (speakReplies && lastReplyRef.current.trim()) {
+      if (getSpeakRepliesEnabled() && lastReplyRef.current.trim()) {
         void speak(lastReplyRef.current)
       }
       await loadMessages(activeId)
