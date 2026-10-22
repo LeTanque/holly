@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { getSpeakRepliesEnabled } from './lib/voice/settings'
+import { useVoiceOutput } from './lib/voice/useVoiceOutput'
+
 import {
   consolidateSession,
   createSession,
@@ -25,8 +28,19 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [memoryOpen, setMemoryOpen] = useState(false)
   const [memoryContent, setMemoryContent] = useState('')
+  const [speakReplies, setSpeakReplies] = useState(() => getSpeakRepliesEnabled())
+  const { speak, stop, voiceActive, phase: voicePhase } = useVoiceOutput()
+  const lastReplyRef = useRef('')
   const [memorySyncing, setMemorySyncing] = useState(false)
   const consolidateQueue = useRef(Promise.resolve())
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') stop()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [stop])
 
   const loadSessions = useCallback(async () => {
     const list = await fetchSessions()
@@ -108,8 +122,10 @@ export default function App() {
 
   const sendMessage = async (text: string) => {
     if (!activeId || busy) return
+    stop()
     setBusy(true)
     setError(null)
+    lastReplyRef.current = ''
     const optimistic: Message = {
       id: `temp-${Date.now()}`,
       sessionId: activeId,
@@ -125,11 +141,15 @@ export default function App() {
       await streamChat(activeId, text, {
         onDelta: (chunk) => {
           setHollyThinking(false)
+          lastReplyRef.current += chunk
           setStreaming((s) => (s ?? '') + chunk)
         },
         onDone: () => {},
         onError: (msg) => setError(msg),
       })
+      if (getSpeakRepliesEnabled() && lastReplyRef.current.trim()) {
+        void speak(lastReplyRef.current)
+      }
       await loadMessages(activeId)
       const list = await loadSessions()
       setSessions(list)
@@ -175,6 +195,26 @@ export default function App() {
           hollyThinking={hollyThinking}
           streamingContent={streaming}
         />
+        {voiceActive && (
+          <div
+            className="flex items-center justify-between gap-3 border-t border-amber-900/50 bg-amber-950/60 px-4 py-3"
+            role="status"
+            aria-live="polite"
+          >
+            <p className="text-sm font-medium text-amber-100">
+              {voicePhase === 'loading'
+                ? 'Preparing Holly’s voice…'
+                : 'Holly is speaking…'}
+            </p>
+            <button
+              type="button"
+              onClick={() => stop()}
+              className="min-h-11 shrink-0 rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-950/40 transition hover:bg-red-500 active:bg-red-700"
+            >
+              Stop
+            </button>
+          </div>
+        )}
         <Composer
           disabled={busy || !activeId}
           status={
@@ -185,6 +225,12 @@ export default function App() {
                 : undefined
           }
           onSend={(t) => void sendMessage(t)}
+          onRecordingStart={() => stop()}
+          speakReplies={speakReplies}
+          onSpeakRepliesChange={setSpeakReplies}
+          voiceActive={voiceActive}
+          voicePhase={voicePhase}
+          onStopSpeaking={() => stop()}
         />
       </main>
       {memoryOpen && (

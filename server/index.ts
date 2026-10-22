@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
 import { runMigrations } from './db/index.js'
+import { audioRoute } from './routes/audio.js'
 import { chatRoute } from './routes/chat.js'
 import { memoryRoute } from './routes/memory.js'
 import { sessionsRoute } from './routes/sessions.js'
@@ -18,6 +19,7 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 app.route('/api/sessions', sessionsRoute)
 app.route('/api/chat', chatRoute)
 app.route('/api/memory', memoryRoute)
+app.route('/api/audio', audioRoute)
 
 const port = Number(process.env.PORT) || 3011
 
